@@ -479,7 +479,6 @@ public class home extends javax.swing.JFrame {
           new filter().setVisible(true);
           this.dispose();
         }
-        
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton1ActionPerformed
 

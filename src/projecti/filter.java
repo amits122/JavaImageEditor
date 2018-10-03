@@ -5,10 +5,12 @@
  */
 package projecti;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 import javax.imageio.ImageIO;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.*;
 
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -50,6 +52,17 @@ class imgFilters{
     
     }
     
+    public void copy(){
+        for(int y = 0; y < height ; y++){
+            for(int x = 0; x < width ; x++){
+                int pixelVal = img.getRGB(x,y);
+                resultImg.setRGB(x,y,pixelVal);
+            }
+        }
+        
+        this.writeImg(home.workingFile);
+    }
+    
     public void negative(){
         
         for(int y = 0; y < height ; y++){
@@ -83,7 +96,6 @@ class imgFilters{
             }
         }
         this.writeImg(home.workingFile+"grey");
-    
     }
 
     public int getSepia(int px){
@@ -186,6 +198,115 @@ class imgFilters{
         this.writeImg(home.workingFile+"b&w");
         
     }
+    
+    public void blur(int kernel){
+        int offset = (kernel - 1) / 2;
+        for(int i=0;i<height;i++){
+            for(int j=0;j<width;j++){
+                int average_r=0, average_g=0, average_b=0,alpha=0;
+                int count =0;
+                for(int m=i-offset;(m<=i+offset);m++){
+                    for(int n=j-offset;(n<=j+offset);n++){
+                        if(m < 0 || n < 0 || m >= height || n >= width)
+                            continue;
+                        count++;
+                        int pixel_val=img.getRGB(m,n);
+                        alpha=(pixel_val>>24)&0xff;
+                        int r=(pixel_val>>16)&0xff;
+                        int g=(pixel_val>>8)&0xff;
+                        int b=(pixel_val)&0xff;
+                        average_r+=r;
+                        average_g+=g;
+                        average_b+=b;
+                    }
+                }
+                average_r/=(count);
+                average_g/=(count);
+                average_b/=(count);
+                int new_pixel_val=alpha<<24|average_r<<16|average_g<<8|average_b;
+                resultImg.setRGB(i,j,new_pixel_val);
+
+            }
+        }
+        this.writeImg(home.workingFile+"blur"+kernel);
+    }
+    
+    public void maxcol(int kernel){
+        Map< String,int[]> hm = new HashMap< String,int[]>();
+        hm.put("black", new int[]{0x00,0x00,0x00,0}); 
+        hm.put("red", new int[]{0xff,0x00,0x00,0}); 
+        hm.put("green", new int[]{0x00,0xff,0x00,0}); 
+        hm.put("blue", new int[]{0x00,0x00,0xff,0});
+        hm.put("yellow", new int[]{0xff,0xff,0x00,0}); 
+        hm.put("cyan", new int[]{0x00,0xff,0xff,0}); 
+        hm.put("magenta", new int[]{0xff,0x00,0xff,0});
+        hm.put("white", new int[]{0xff,0xff,0xff,0});
+
+        int offset = (kernel-1)/2;
+        for(int i = 0; i < height; i++){
+            for(int j = 0; j < width; j++){
+                int average_r = 0, average_g = 0, average_b = 0,alpha = 0;
+                int count = 0;
+                for(int m = i - offset; (m <= i + offset); m++){
+                    for(int n = j - offset;(n <= j + offset); n++){
+                        if(m < 0 || n < 0 || m >= height || n >= width)
+                            continue;
+                        count++;
+                        int pixel_val=img.getRGB(m,n);
+                        alpha=(pixel_val>>24)&0xff;
+                        int r=(pixel_val>>16)&0xff;
+                        int g=(pixel_val>>8)&0xff;
+                        int b=(pixel_val)&0xff;
+
+                        double min = 9999;
+                        String cur = "";
+                        Set< Map.Entry< String,int[]> > st = hm.entrySet();    
+
+                        for (Map.Entry< String,int[]> me:st){ 
+                            int r1 = me.getValue()[0];
+                            int g1 = me.getValue()[1];
+                            int b1 = me.getValue()[2];
+                            double sum = (r1-r)*(r1-r) + (g1-g)*(g1-g) + (b1-b)*(b1-b);
+                            // System.out.println(sum+"-"+Math.sqrt(sum));
+                            if(min > Math.sqrt(sum)){
+                                cur = me.getKey();
+                                min = Math.sqrt(sum);
+                            }
+                        } 
+                        // System.out.println("color"+cur);
+                        int temp[] = hm.get(cur);
+                        temp[3]++;
+                        hm.put(cur,temp);
+                        cur = "";
+                    }
+                }
+                // Set< Map.Entry< String,int[]> > st = hm.entrySet();
+                //   for (Map.Entry< String,int[]> me:st){ 
+                //     System.out.println(me.getKey()+me.getValue()[3]);
+                // }
+                int max = -1;
+                String cur = "";
+                Set< Map.Entry< String,int[]> > st = hm.entrySet();    
+                for (Map.Entry< String,int[]> me:st){ 
+                    if(max < me.getValue()[3]){
+                        cur = me.getKey();
+                        max = me.getValue()[3];
+                    }
+                }
+                int new_pixel_val=0xff<<24|hm.get(cur)[0]<<16|hm.get(cur)[1]<<8|hm.get(cur)[2];
+                resultImg.setRGB(i,j,new_pixel_val);
+                hm.put("black", new int[]{0x00,0x00,0x00,0}); 
+                hm.put("red", new int[]{0xff,0x00,0x00,0}); 
+                hm.put("green", new int[]{0x00,0xff,0x00,0}); 
+                hm.put("blue", new int[]{0x00,0x00,0xff,0});
+                hm.put("yellow", new int[]{0xff,0xff,0x00,0}); 
+                hm.put("cyan", new int[]{0x00,0xff,0xff,0}); 
+                hm.put("magenta", new int[]{0xff,0x00,0xff,0});
+                hm.put("white", new int[]{0xff,0xff,0xff,0});                      
+            }
+        }
+        this.writeImg(home.workingFile+"max"+kernel);
+    }
 
     public int merger(int px1, int px2, float alpha)
     {
@@ -204,19 +325,19 @@ class imgFilters{
             b2 *= (1-alpha);
             int new_pixel_val = res_alpha<<24|(r1+r2)<<16|(g1+g2)<<8|(b1+b2);
             return new_pixel_val;
-    }
-    
-    
+    }    
 }
 
 public class filter extends javax.swing.JFrame {
     
-    public final List<String> filterList = Arrays.asList(home.workingFile+"negative.png", home.workingFile+"grey.png", home.workingFile+"sepia.png", home.workingFile+"red.png", home.workingFile+"b&w.png");
+    
+    public final List<String> filterList = Arrays.asList(home.workingFile+".png" ,home.workingFile+"negative.png", home.workingFile+"grey.png", home.workingFile+"sepia.png", home.workingFile+"red.png", home.workingFile+"b&w.png", home.workingFile+"blur5.png", home.workingFile+"max5.png");
     //public final List<String> filterList = Arrays.asList("lennanegative.png", "lennagrey.png", "lennasepia.png", "lennared.png", "lennab&w.png"); //Testing Code
-    public final List<String> filterListNames = Arrays.asList("Negative", "Greyscale", "Sepia", "Red", "B&W");
+    public final List<String> filterListNames = Arrays.asList("Normal", "Negative", "Greyscale", "Sepia", "Red", "B&W", "Blur", "Magic");
 
     public int filterIndex = -1;//the index of first item being displayed in bottom
     public imgFilters imgf = new imgFilters();
+    String spotlightFile = home.workingFile+".png";
 
     /**
      * Creates new form filter
@@ -253,9 +374,15 @@ public class filter extends javax.swing.JFrame {
         jPanel18 = new javax.swing.JPanel();
         filterImg3 = new javax.swing.JLabel();
         filterLabel3 = new javax.swing.JLabel();
+        jButton4 = new javax.swing.JButton();
+        sliderPanel = new javax.swing.JPanel();
+        pixelSlider = new javax.swing.JSlider();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
             public void windowOpened(java.awt.event.WindowEvent evt) {
                 formWindowOpened(evt);
             }
@@ -400,7 +527,7 @@ public class filter extends javax.swing.JFrame {
         jPanel17.setLayout(jPanel17Layout);
         jPanel17Layout.setHorizontalGroup(
             jPanel17Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(filterImg2, javax.swing.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE)
+            .addComponent(filterImg2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(filterLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel17Layout.setVerticalGroup(
@@ -438,25 +565,63 @@ public class filter extends javax.swing.JFrame {
                 .addComponent(filterLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
+        jButton4.setBackground(new java.awt.Color(255, 255, 255));
+        jButton4.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        jButton4.setForeground(new java.awt.Color(0, 0, 153));
+        jButton4.setText("Save");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton4ActionPerformed(evt);
+            }
+        });
+
+        pixelSlider.setMaximum(13);
+        pixelSlider.setMinimum(1);
+        pixelSlider.setToolTipText("");
+        pixelSlider.setValue(7);
+        pixelSlider.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                pixelSliderMouseReleased(evt);
+            }
+        });
+
+        javax.swing.GroupLayout sliderPanelLayout = new javax.swing.GroupLayout(sliderPanel);
+        sliderPanel.setLayout(sliderPanelLayout);
+        sliderPanelLayout.setHorizontalGroup(
+            sliderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(pixelSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        sliderPanelLayout.setVerticalGroup(
+            sliderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, sliderPanelLayout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(pixelSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 410, Short.MAX_VALUE)
+            .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 415, Short.MAX_VALUE)
             .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jPanel19, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 410, Short.MAX_VALUE)
+            .addComponent(jPanel19, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 415, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 12, Short.MAX_VALUE)
-                .addComponent(jPanel14, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jPanel17, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10)
-                .addComponent(jPanel18, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(sliderPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 12, Short.MAX_VALUE)
+                        .addComponent(jPanel14, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jButton4, javax.swing.GroupLayout.DEFAULT_SIZE, 95, Short.MAX_VALUE)
+                            .addComponent(jPanel17, javax.swing.GroupLayout.DEFAULT_SIZE, 95, Short.MAX_VALUE))
+                        .addGap(10, 10, 10)
+                        .addComponent(jPanel18, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -477,7 +642,11 @@ public class filter extends javax.swing.JFrame {
                         .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(jPanel17, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jPanel18, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(59, Short.MAX_VALUE))
+                .addGap(19, 19, 19)
+                .addComponent(sliderPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(17, 17, 17)
+                .addComponent(jButton4)
+                .addContainerGap(32, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -488,9 +657,7 @@ public class filter extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
@@ -499,6 +666,7 @@ public class filter extends javax.swing.JFrame {
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         //home.workingFile = "lenna"; //testing code
         BufferedImage img = null;
+        
         try {
             img = ImageIO.read(new File(home.workingFileDirectory));
             //img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\lenna.png")); // Testing code
@@ -512,12 +680,17 @@ public class filter extends javax.swing.JFrame {
         Image scaledImg = img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
         mainImage.setIcon(new ImageIcon(scaledImg));
         
+        pixelSlider.setVisible(false);
         
+        imgf.copy();
         imgf.greyscale();
         imgf.negative();
         imgf.sepia();
         imgf.makeRed();
         imgf.blackWhite();
+        imgf.blur(5);
+        imgf.maxcol(5);
+        
         jButton2.doClick();
         
         // TODO add your handling code here:
@@ -530,11 +703,7 @@ public class filter extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        
-        System.out.println(Arrays.toString(filterList.toArray()));
-        System.out.println(Arrays.toString(filterListNames.toArray()));
-        
-        if(filterIndex < filterList.size() - 3){
+            if(filterIndex < filterList.size() - 3){
             filterIndex += 1;
             BufferedImage img1, img2, img3;
             Image scaledImg1, scaledImg2, scaledImg3;
@@ -602,7 +771,6 @@ public class filter extends javax.swing.JFrame {
     BufferedImage img = null;
 
     try {
-        //img = ImageIO.read(new File(home.workingFileDirectory));
         img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filename)); // Testing code
     } catch (IOException e) {
         e.printStackTrace();
@@ -611,6 +779,12 @@ public class filter extends javax.swing.JFrame {
 
     Image scaledImg = img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
     mainImage.setIcon(new ImageIcon(scaledImg));
+    spotlightFile = filename;
+    if(filename.contains("max") == true || filename.contains("blur") == true)
+        pixelSlider.setVisible(true);
+    else
+        pixelSlider.setVisible(false);
+    
     // TODO add your handling code here:
     }//GEN-LAST:event_filterImg1MouseClicked
 
@@ -620,7 +794,6 @@ public class filter extends javax.swing.JFrame {
     BufferedImage img = null;
 
     try {
-        //img = ImageIO.read(new File(home.workingFileDirectory));
         img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filename)); // Testing code
     } catch (IOException e) {
         e.printStackTrace();
@@ -628,7 +801,15 @@ public class filter extends javax.swing.JFrame {
     mainImage.setIcon(new ImageIcon(img));
 
     Image scaledImg = img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
-    mainImage.setIcon(new ImageIcon(scaledImg));        // TODO add your handling code here:
+    mainImage.setIcon(new ImageIcon(scaledImg));
+    spotlightFile = filename; 
+
+    if(filename.contains("max") == true || filename.contains("blur") == true)
+        pixelSlider.setVisible(true);
+    else
+        pixelSlider.setVisible(false);
+    
+    // TODO add your handling code here:
     }//GEN-LAST:event_filterImg2MouseClicked
 
     private void filterImg3MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_filterImg3MouseClicked
@@ -637,7 +818,6 @@ public class filter extends javax.swing.JFrame {
     BufferedImage img = null;
 
     try {
-        //img = ImageIO.read(new File(home.workingFileDirectory));
         img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filename)); // Testing code
     } catch (IOException e) {
         e.printStackTrace();
@@ -645,8 +825,61 @@ public class filter extends javax.swing.JFrame {
     mainImage.setIcon(new ImageIcon(img));
 
     Image scaledImg = img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
-    mainImage.setIcon(new ImageIcon(scaledImg));        // TODO add your handling code here:
+    mainImage.setIcon(new ImageIcon(scaledImg));
+    spotlightFile = filename;        
+    
+    if(filename.contains("max") == true || filename.contains("blur") == true)
+        pixelSlider.setVisible(true);
+    else
+        pixelSlider.setVisible(false);
+
+    // TODO add your handling code here:
     }//GEN-LAST:event_filterImg3MouseClicked
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        File dir = new File("..\\ProjectI\\src\\projecti\\images\\mods\\");
+        for(File file: dir.listFiles()) 
+            if (!file.isDirectory()) 
+                file.delete();    
+    // TODO add your handling code here:
+    }//GEN-LAST:event_formWindowClosing
+
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+        String dst = (String)JOptionPane.showInputDialog( "Enter filename: ", spotlightFile);
+        try{
+            File src = new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+spotlightFile);
+            File dest = new File("..\\ProjectI\\src\\projecti\\images\\saved\\"+dst);
+            Files.copy(src.toPath() , dest.toPath(), StandardCopyOption.REPLACE_EXISTING);          
+        }   catch(IOException e) {
+            System.out.println(e.getMessage());
+        }
+
+    // TODO add your handling code here:
+    }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void pixelSliderMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pixelSliderMouseReleased
+        BufferedImage img = null;
+        int x = pixelSlider.getValue();
+        String filename = "";
+        if(spotlightFile.equals(home.workingFile+"blur5.png")){
+            imgf.blur(x);        
+            filename = home.workingFile+"blur"+x+".png";
+        }
+        else if(spotlightFile.equals(home.workingFile+"max5.png")){
+            imgf.maxcol(x);        
+            filename = home.workingFile+"max"+x+".png";        
+        }
+        
+        try {
+            img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filename)); // Testing code
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        mainImage.setIcon(new ImageIcon(img));
+        Image scaledImg = img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
+        mainImage.setIcon(new ImageIcon(scaledImg));
+        // TODO add your handling code here:
+    }//GEN-LAST:event_pixelSliderMouseReleased
 
     /**
      * @param args the command line arguments
@@ -693,6 +926,7 @@ public class filter extends javax.swing.JFrame {
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel14;
@@ -703,5 +937,7 @@ public class filter extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JLabel mainImage;
+    private javax.swing.JSlider pixelSlider;
+    private javax.swing.JPanel sliderPanel;
     // End of variables declaration//GEN-END:variables
 }
