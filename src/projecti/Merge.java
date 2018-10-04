@@ -16,6 +16,12 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.Icon;
+import javax.swing.JFileChooser;
+import static projecti.home.workingFile;
+import static projecti.home.workingFileDirectory;
 
 
 /**
@@ -23,13 +29,13 @@ import java.util.*;
  * @author amits
  */
 
-class imgFilters{
+class mergeFilters{
     
     BufferedImage img, resultImg;
     String opFileName;
     int height, width;
 
-    imgFilters(){
+    mergeFilters(){
         try {
             img = ImageIO.read(new File(home.workingFileDirectory));
 //            img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\lenna.png")); // Testing code
@@ -307,8 +313,7 @@ class imgFilters{
         }
         this.writeImg(home.workingFile+"max"+kernel);
     }
-
-    public int merger(int px1, int px2, float alpha)
+    public static int merger(int px1, int px2, float alpha)
     {
             int res_alpha = 0xff;
             int r1 = ((px1>>16)&0xff);
@@ -328,7 +333,7 @@ class imgFilters{
     }    
 }
 
-public class filter extends javax.swing.JFrame {
+public class Merge extends javax.swing.JFrame {
     
     
     public final List<String> filterList = Arrays.asList(home.workingFile+".png" ,home.workingFile+"negative.png", home.workingFile+"grey.png", home.workingFile+"sepia.png", home.workingFile+"red.png", home.workingFile+"b&w.png", home.workingFile+"blur5.png", home.workingFile+"max5.png");
@@ -336,16 +341,45 @@ public class filter extends javax.swing.JFrame {
     public final List<String> filterListNames = Arrays.asList("Normal", "Negative", "Greyscale", "Sepia", "Red", "B&W", "Blur", "Magic");
 
     public int filterIndex = -1;//the index of first item being displayed in bottom
-    public imgFilters imgf = new imgFilters();
+    public mergeFilters imgf = new mergeFilters();
     String spotlightFile = home.workingFile+".png";
 
+    JFileChooser fc = new JFileChooser("..\\ProjectI\\src\\projecti\\images");
+    String workingFile1="";
+    String workingFileDirectory1="";
+    String workingFile2="";
+    String workingFileDirectory2="";
+    BufferedImage img1,img3;
+    Boolean flag1 = false;
+    Boolean flag2 =false;
     /**
      * Creates new form filter
      */
-    public filter() {
+    public Merge() {
         initComponents();
     }
-
+    
+    public void blendImg(){
+//        mergeFilter
+        
+        float alphaFloat = ((float) pixelSlider2.getValue())/100;
+        System.out.println("alpha"+alphaFloat);
+        int height = img1.getHeight() < img3.getHeight() ? img1.getHeight() : img3.getHeight();
+        int width = img1.getWidth() < img3.getWidth() ? img1.getWidth() : img3.getWidth();
+        
+        BufferedImage result_img = new BufferedImage(width,height,5);
+            for(int y=0;y<height;y++){
+                    for(int x=0;x<width;x++){
+                            int pixel_val1=img1.getRGB(x,y);
+                            int pixel_val2=img3.getRGB(x,y);
+                            int new_pixel_val= mergeFilters.merger(pixel_val1,pixel_val2,alphaFloat);
+                            result_img.setRGB(x,y,new_pixel_val);
+                    }
+            }
+        Image scaledImg = result_img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
+        mainImage.setIcon(new ImageIcon(scaledImg));
+        
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -359,25 +393,19 @@ public class filter extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jButton3 = new javax.swing.JButton();
-        jButton5 = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         mainImage = new javax.swing.JLabel();
         jPanel19 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
         jPanel14 = new javax.swing.JPanel();
         filterImg1 = new javax.swing.JLabel();
-        filterLabel1 = new javax.swing.JLabel();
-        jPanel17 = new javax.swing.JPanel();
-        filterImg2 = new javax.swing.JLabel();
-        filterLabel2 = new javax.swing.JLabel();
+        jButton2 = new javax.swing.JButton();
         jPanel18 = new javax.swing.JPanel();
         filterImg3 = new javax.swing.JLabel();
-        filterLabel3 = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         sliderPanel = new javax.swing.JPanel();
-        pixelSlider = new javax.swing.JSlider();
+        pixelSlider2 = new javax.swing.JSlider();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -393,7 +421,7 @@ public class filter extends javax.swing.JFrame {
 
         jLabel2.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         jLabel2.setForeground(new java.awt.Color(0, 0, 102));
-        jLabel2.setText("FILTERS");
+        jLabel2.setText("Merge");
         jLabel2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
 
         jButton3.setBackground(new java.awt.Color(255, 255, 255));
@@ -404,14 +432,6 @@ public class filter extends javax.swing.JFrame {
             }
         });
 
-        jButton5.setBackground(new java.awt.Color(255, 255, 255));
-        jButton5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/projecti/images/baseline_keyboard_arrow_right_black_24dp.png"))); // NOI18N
-        jButton5.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton5ActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -419,11 +439,9 @@ public class filter extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 145, Short.MAX_VALUE)
-                .addComponent(jLabel2)
-                .addGap(130, 130, 130)
-                .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(189, 189, 189))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -433,9 +451,7 @@ public class filter extends javax.swing.JFrame {
                 .addContainerGap(27, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jButton5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -482,20 +498,6 @@ public class filter extends javax.swing.JFrame {
             .addGap(0, 6, Short.MAX_VALUE)
         );
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/projecti/images/baseline_keyboard_arrow_left_black_24dp.png"))); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
-
-        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/projecti/images/baseline_keyboard_arrow_right_black_24dp.png"))); // NOI18N
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
-            }
-        });
-
         jPanel14.setBackground(new java.awt.Color(255, 255, 255));
         jPanel14.setPreferredSize(new java.awt.Dimension(90, 90));
 
@@ -506,49 +508,29 @@ public class filter extends javax.swing.JFrame {
             }
         });
 
-        filterLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        filterLabel1.setToolTipText("");
+        jButton2.setText("Upload");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel14Layout = new javax.swing.GroupLayout(jPanel14);
         jPanel14.setLayout(jPanel14Layout);
         jPanel14Layout.setHorizontalGroup(
             jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(filterImg1, javax.swing.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE)
-            .addComponent(filterLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(filterImg1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel14Layout.createSequentialGroup()
+                .addContainerGap(15, Short.MAX_VALUE)
+                .addComponent(jButton2)
+                .addContainerGap())
         );
         jPanel14Layout.setVerticalGroup(
             jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel14Layout.createSequentialGroup()
                 .addComponent(filterImg1, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(filterLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
-
-        jPanel17.setBackground(new java.awt.Color(255, 255, 255));
-        jPanel17.setPreferredSize(new java.awt.Dimension(90, 90));
-
-        filterImg2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        filterImg2.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                filterImg2MouseClicked(evt);
-            }
-        });
-
-        filterLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-
-        javax.swing.GroupLayout jPanel17Layout = new javax.swing.GroupLayout(jPanel17);
-        jPanel17.setLayout(jPanel17Layout);
-        jPanel17Layout.setHorizontalGroup(
-            jPanel17Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(filterImg2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(filterLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        jPanel17Layout.setVerticalGroup(
-            jPanel17Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel17Layout.createSequentialGroup()
-                .addComponent(filterImg2, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(filterLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
+                .addComponent(jButton2))
         );
 
         jPanel18.setBackground(new java.awt.Color(255, 255, 255));
@@ -561,21 +543,29 @@ public class filter extends javax.swing.JFrame {
             }
         });
 
-        filterLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jButton1.setText("Upload");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel18Layout = new javax.swing.GroupLayout(jPanel18);
         jPanel18.setLayout(jPanel18Layout);
         jPanel18Layout.setHorizontalGroup(
             jPanel18Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(filterImg3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(filterLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel18Layout.createSequentialGroup()
+                .addContainerGap(15, Short.MAX_VALUE)
+                .addComponent(jButton1)
+                .addContainerGap())
         );
         jPanel18Layout.setVerticalGroup(
             jPanel18Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel18Layout.createSequentialGroup()
                 .addComponent(filterImg3, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(filterLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
+                .addComponent(jButton1))
         );
 
         jButton4.setBackground(new java.awt.Color(255, 255, 255));
@@ -588,13 +578,12 @@ public class filter extends javax.swing.JFrame {
             }
         });
 
-        pixelSlider.setMaximum(13);
-        pixelSlider.setMinimum(1);
-        pixelSlider.setToolTipText("");
-        pixelSlider.setValue(7);
-        pixelSlider.addMouseListener(new java.awt.event.MouseAdapter() {
+        pixelSlider2.setMinimum(1);
+        pixelSlider2.setToolTipText("");
+        pixelSlider2.setValue(50);
+        pixelSlider2.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
-                pixelSliderMouseReleased(evt);
+                pixelSlider2MouseReleased(evt);
             }
         });
 
@@ -602,13 +591,13 @@ public class filter extends javax.swing.JFrame {
         sliderPanel.setLayout(sliderPanelLayout);
         sliderPanelLayout.setHorizontalGroup(
             sliderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(pixelSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(pixelSlider2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         sliderPanelLayout.setVerticalGroup(
             sliderPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, sliderPanelLayout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(pixelSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(pixelSlider2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -624,17 +613,13 @@ public class filter extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(sliderPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 12, Short.MAX_VALUE)
+                        .addGap(0, 47, Short.MAX_VALUE)
                         .addComponent(jPanel14, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jButton4, javax.swing.GroupLayout.DEFAULT_SIZE, 95, Short.MAX_VALUE)
-                            .addComponent(jPanel17, javax.swing.GroupLayout.DEFAULT_SIZE, 95, Short.MAX_VALUE))
+                        .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(10, 10, 10)
                         .addComponent(jPanel18, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(53, 53, 53)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -649,11 +634,7 @@ public class filter extends javax.swing.JFrame {
                 .addComponent(jPanel19, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jPanel14, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(jPanel17, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jPanel14, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jPanel18, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(19, 19, 19)
                 .addComponent(sliderPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -679,7 +660,6 @@ public class filter extends javax.swing.JFrame {
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         //home.workingFile = "lenna"; //testing code
         BufferedImage img = null;
-        
         try {
             img = ImageIO.read(new File(home.workingFileDirectory));
             //img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\lenna.png")); // Testing code
@@ -693,7 +673,7 @@ public class filter extends javax.swing.JFrame {
         Image scaledImg = img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
         mainImage.setIcon(new ImageIcon(scaledImg));
         
-        pixelSlider.setVisible(false);
+        pixelSlider2.setVisible(false);
         
         imgf.copy();
         imgf.greyscale();
@@ -715,139 +695,28 @@ public class filter extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton3ActionPerformed
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-            if(filterIndex < filterList.size() - 3){
-            filterIndex += 1;
-            BufferedImage img1, img2, img3;
-            Image scaledImg1, scaledImg2, scaledImg3;
-            try {
-                img1 = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filterList.get(filterIndex)));
-                img2 = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filterList.get(filterIndex + 1)));
-                img3 = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filterList.get(filterIndex + 2)));
-                
-                scaledImg1 = img1.getScaledInstance(filterImg1.getWidth(), filterImg1.getHeight(), Image.SCALE_SMOOTH);
-                filterImg1.setIcon(new ImageIcon(scaledImg1));
-                filterLabel1.setText(filterListNames.get(filterIndex));
-                
-                scaledImg2 = img2.getScaledInstance(filterImg2.getWidth(), filterImg2.getHeight(), Image.SCALE_SMOOTH);
-                filterImg2.setIcon(new ImageIcon(scaledImg2));
-                filterLabel2.setText(filterListNames.get(filterIndex + 1));
-                
-                scaledImg3 = img3.getScaledInstance(filterImg3.getWidth(), filterImg3.getHeight(), Image.SCALE_SMOOTH);
-                filterImg3.setIcon(new ImageIcon(scaledImg3));
-                filterLabel3.setText(filterListNames.get(filterIndex + 2));
-                
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            
-        }
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton2ActionPerformed
-
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        if(filterIndex > 0){
-            filterIndex -= 1;
-            BufferedImage img1, img2, img3;
-            Image scaledImg1, scaledImg2, scaledImg3;
-            try {
-                img1 = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filterList.get(filterIndex)));
-                img2 = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filterList.get(filterIndex + 1)));
-                img3 = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filterList.get(filterIndex + 2)));
-                
-                scaledImg1 = img1.getScaledInstance(filterImg1.getWidth(), filterImg1.getHeight(), Image.SCALE_SMOOTH);
-                filterImg1.setIcon(new ImageIcon(scaledImg1));
-                filterLabel1.setText(filterListNames.get(filterIndex));
-                
-                scaledImg2 = img2.getScaledInstance(filterImg2.getWidth(), filterImg2.getHeight(), Image.SCALE_SMOOTH);
-                filterImg2.setIcon(new ImageIcon(scaledImg2));
-                filterLabel2.setText(filterListNames.get(filterIndex + 1));
-                
-                scaledImg3 = img3.getScaledInstance(filterImg3.getWidth(), filterImg3.getHeight(), Image.SCALE_SMOOTH);
-                filterImg3.setIcon(new ImageIcon(scaledImg3));
-                filterLabel3.setText(filterListNames.get(filterIndex + 2));
-                
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            
-        }
-
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton1ActionPerformed
-
     private void filterImg1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_filterImg1MouseClicked
-    int iter = filterListNames.indexOf(filterLabel1.getText());
-    String filename = filterList.get(iter);
-    BufferedImage img = null;
-
-    try {
-        img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filename)); // Testing code
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
-    mainImage.setIcon(new ImageIcon(img));
-
-    Image scaledImg = img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
-    mainImage.setIcon(new ImageIcon(scaledImg));
-    spotlightFile = filename;
-    if(filename.contains("max") == true || filename.contains("blur") == true)
-        pixelSlider.setVisible(true);
-    else
-        pixelSlider.setVisible(false);
-    
+//    int iter = filterListNames.indexOf(filterLabel1.getText());
+//    String filename = filterList.get(iter);
+//    BufferedImage img = null;
+//
+//    try {
+//        img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filename)); // Testing code
+//    } catch (IOException e) {
+//        e.printStackTrace();
+//    }
+//    mainImage.setIcon(new ImageIcon(img));
+//
+//    Image scaledImg = img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
+//    mainImage.setIcon(new ImageIcon(scaledImg));
+//    spotlightFile = filename;
+//    if(filename.contains("max") == true || filename.contains("blur") == true)
+//        pixelSlider.setVisible(true);
+//    else
+//        pixelSlider.setVisible(false);
+//    
     // TODO add your handling code here:
     }//GEN-LAST:event_filterImg1MouseClicked
-
-    private void filterImg2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_filterImg2MouseClicked
-    int iter = filterListNames.indexOf(filterLabel2.getText());
-    String filename = filterList.get(iter);
-    BufferedImage img = null;
-
-    try {
-        img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filename)); // Testing code
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
-    mainImage.setIcon(new ImageIcon(img));
-
-    Image scaledImg = img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
-    mainImage.setIcon(new ImageIcon(scaledImg));
-    spotlightFile = filename; 
-
-    if(filename.contains("max") == true || filename.contains("blur") == true)
-        pixelSlider.setVisible(true);
-    else
-        pixelSlider.setVisible(false);
-    
-    // TODO add your handling code here:
-    }//GEN-LAST:event_filterImg2MouseClicked
-
-    private void filterImg3MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_filterImg3MouseClicked
-    int iter = filterListNames.indexOf(filterLabel3.getText());
-    String filename = filterList.get(iter);
-    BufferedImage img = null;
-
-    try {
-        img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filename)); // Testing code
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
-    mainImage.setIcon(new ImageIcon(img));
-
-    Image scaledImg = img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
-    mainImage.setIcon(new ImageIcon(scaledImg));
-    spotlightFile = filename;        
-    
-    if(filename.contains("max") == true || filename.contains("blur") == true)
-        pixelSlider.setVisible(true);
-    else
-        pixelSlider.setVisible(false);
-
-    // TODO add your handling code here:
-    }//GEN-LAST:event_filterImg3MouseClicked
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         File dir = new File("..\\ProjectI\\src\\projecti\\images\\mods\\");
@@ -870,36 +739,105 @@ public class filter extends javax.swing.JFrame {
     // TODO add your handling code here:
     }//GEN-LAST:event_jButton4ActionPerformed
 
-    private void pixelSliderMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pixelSliderMouseReleased
-        BufferedImage img = null;
-        int x = pixelSlider.getValue();
-        String filename = "";
-        if(spotlightFile.equals(home.workingFile+"blur5.png")){
-            imgf.blur(x);        
-            filename = home.workingFile+"blur"+x+".png";
-        }
-        else if(spotlightFile.equals(home.workingFile+"max5.png")){
-            imgf.maxcol(x);        
-            filename = home.workingFile+"max"+x+".png";        
+    private void pixelSlider2MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pixelSlider2MouseReleased
+//        BufferedImage img = null;
+//        int x = pixelSlider2.getValue();
+//        String filename = "";
+//        if(spotlightFile.equals(home.workingFile+"blur5.png")){
+//            imgf.blur(x);        
+//            filename = home.workingFile+"blur"+x+".png";
+//        }
+//        else if(spotlightFile.equals(home.workingFile+"max5.png")){
+//            imgf.maxcol(x);        
+//            filename = home.workingFile+"max"+x+".png";        
+//        }
+//        
+//        try {
+//            img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filename)); // Testing code
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        mainImage.setIcon(new ImageIcon(img));
+//        Image scaledImg = img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
+//        mainImage.setIcon(new ImageIcon(scaledImg));
+            blendImg();
+        // TODO add your handling code here:
+    }//GEN-LAST:event_pixelSlider2MouseReleased
+
+    private void filterImg3MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_filterImg3MouseClicked
+//        int iter = filterListNames.indexOf(filterLabel3.getText());
+//        String filename = filterList.get(iter);
+//        BufferedImage img = null;
+//
+//        try {
+//            img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filename)); // Testing code
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            mainImage.setIcon(new ImageIcon(img));
+//
+//            Image scaledImg = img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
+//            mainImage.setIcon(new ImageIcon(scaledImg));
+//            spotlightFile = filename;
+//
+//            if(filename.contains("max") == true || filename.contains("blur") == true)
+//            pixelSlider.setVisible(true);
+//            else
+//            pixelSlider.setVisible(false);
+//
+//            // TODO add your handling code here:
+    }//GEN-LAST:event_filterImg3MouseClicked
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+        int returnValue = fc.showOpenDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+          File selectedFile = fc.getSelectedFile();
+          workingFile1 = selectedFile.getName();
+          workingFile1= workingFile1.substring(0, workingFile1.lastIndexOf("."));//Strip extension
+          workingFileDirectory1 = selectedFile.getPath();
+          Image scaledImg3;
+//          System.out.println
+            try {      
+                img3 = ImageIO.read(selectedFile);
+            } catch (IOException ex) {
+                Logger.getLogger(Merge.class.getName()).log(Level.SEVERE, null, ex);
+            }
+          scaledImg3 = img3.getScaledInstance(filterImg3.getWidth(), filterImg3.getHeight(), Image.SCALE_SMOOTH);
+          filterImg3.setIcon(new ImageIcon(scaledImg3));
+          flag1 = true;
+          System.out.println("flag1"+flag1+"flag2"+flag2);
+          if(flag2){
+            blendImg();
+            }
         }
         
-        try {
-            img = ImageIO.read(new File("..\\ProjectI\\src\\projecti\\images\\mods\\"+filename)); // Testing code
-        } catch (IOException e) {
-            e.printStackTrace();
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // TODO add your handling code here:
+        int returnValue = fc.showOpenDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+          File selectedFile = fc.getSelectedFile();
+          workingFile2 = selectedFile.getName();
+          workingFile2= workingFile2.substring(0, workingFile2.lastIndexOf("."));//Strip extension
+          workingFileDirectory2 = selectedFile.getPath();
+          Image scaledImg1;
+//          System.out.println
+            try {      
+                img1 = ImageIO.read(selectedFile);
+            } catch (IOException ex) {
+                Logger.getLogger(Merge.class.getName()).log(Level.SEVERE, null, ex);
+            }
+          scaledImg1 = img1.getScaledInstance(filterImg1.getWidth(), filterImg1.getHeight(), Image.SCALE_SMOOTH);
+          filterImg1.setIcon(new ImageIcon(scaledImg1));
+          flag2 = true;
+            System.out.println("flag1"+flag1+"flag2"+flag2);
+            if(flag1){
+                blendImg();
+            }
         }
-        mainImage.setIcon(new ImageIcon(img));
-        Image scaledImg = img.getScaledInstance(mainImage.getWidth(), mainImage.getHeight(),Image.SCALE_SMOOTH);
-        mainImage.setIcon(new ImageIcon(scaledImg));
-        // TODO add your handling code here:
-    }//GEN-LAST:event_pixelSliderMouseReleased
-
-    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        new Merge().setVisible(true);
-        this.dispose();
-
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton5ActionPerformed
+    }//GEN-LAST:event_jButton2ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -938,27 +876,21 @@ public class filter extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel filterImg1;
-    private javax.swing.JLabel filterImg2;
     private javax.swing.JLabel filterImg3;
-    private javax.swing.JLabel filterLabel1;
-    private javax.swing.JLabel filterLabel2;
-    private javax.swing.JLabel filterLabel3;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
-    private javax.swing.JButton jButton5;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel14;
-    private javax.swing.JPanel jPanel17;
     private javax.swing.JPanel jPanel18;
     private javax.swing.JPanel jPanel19;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JLabel mainImage;
-    private javax.swing.JSlider pixelSlider;
+    private javax.swing.JSlider pixelSlider2;
     private javax.swing.JPanel sliderPanel;
     // End of variables declaration//GEN-END:variables
 }
